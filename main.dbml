@@ -1,0 +1,135 @@
+Project HSE_abit {
+    Note: 'В описание вошли только сущности, необходимые для работы компонентов выбора программ и 
+    выбора тестов для записи. Все они (за исключением user и может быть enrollee) должны 
+    прилетать по синхронизации из 1С (уже должны). Соответствие по сущностям и полям присутствует.
+    Принципы: 
+    1. Переносим только те сущности и те поля, которые используются на фронте
+    2. Следим за наименованием - в общий скоуп добаляем только общие сущности'
+}
+
+
+Table dictionary_name {
+    id uuid [pk]
+    signature varchar [ note: 'ClassId/Metadata_Name сущности в 1С']
+    name varchar [ note: 'Название сущности на английском - для средней части полей ключей']
+
+    note: 'Таблица названий простых словарей'
+}
+
+
+Table dictionary_value {
+    id uuid [pk]
+    dictionary_name_id uuid [ ref: > dictionary_name.id, note: 'Название словаря']
+    value varchar [ note: 'Значение элемента простого словаря']
+    value_en varchar [ note: 'Значение элемента простого словаря на английском']
+
+    note: 'Таблица значений простых словарей'
+}
+
+
+Table study_program {
+    id uuid [pk]
+    name varchar [ note: 'Название программы, 1C:ПолноеНаименование']
+    name_en varchar [ note: 'new:Название программы на английском, 1C:НаименованиеАнглийский']
+    dv_campus_id uuid [ ref: > dictionary_value.id, note: 'Кампус, 1C:Филиал_Key']
+    dv_study_direction_id uuid [ ref: > dictionary_value.id, note: 'Направление образования, 1C:НаправлениеСпециальность_Key']
+    dv_program_language_id uuid [ ref: > dictionary_value.id, note: 'Язык программы, 1C:ЯзыкРеализацииПрограммы_Key']
+    dv_education_form_id uuid [ ref: > dictionary_value.id,  note: 'Тип образования очно/заочно, 1C:ФормаОбучения_Key']
+    dv_education_level_id uuid [ ref: > dictionary_value.id,  note: 'Уровень образования, 1C:УровеньОбразования_Key']
+    duration int [ note: 'Количество лет образования, 1C:ПродолжительностьОбучения']
+    dv_faculty_id uuid [ ref: > dictionary_value.id, note: 'Факультет WF, 1C:Факультет_Key']
+    dv_awarded_qualification_id uuid [ ref: > dictionary_value.id, note: 'Присваиваемая квалификация WF, 1C:СтепеньКвалификация_Key']
+    manager_id uuid [ ref: > institute_worker.id, note: 'Менеджер программы, 1C:РуководительПрограммы_Key' ]
+    boss_id uuid [ ref: > institute_worker.id, note: 'Руководитель программы, 1C:РуководительПрограммы_Key' ]
+
+    note: "Образовательная программа, 1C:Catalog_ОбразовательнаяПрограмма"
+}
+
+Table institute_worker {
+    id uuid [pk]
+    fio varchar [note: ' ФИО сотрудника, 1C:Description']
+    email varchar [note: 'email сотрудника, 1C: ']
+    note: "Работники ВУЗа, 1С:Catalog_РаботникиВУЗа" 
+
+}
+
+Table program_postgraduate_profile {
+    id uuid [pk]
+    name varchar [note: ' Название, 1C:Description']
+    name_en varchar [note: ' Название англ, 1C:НаименованиеНаАнглийскомЯзыке']
+    study_program_id uuid [ ref: > study_program.id, note: 'Образовательная программа, 1C:ОбразовательнаяПрограмма_Key']
+    
+    note: "Профили подготовки аспирантов, 1С:Catalog_ПрофилиПодготовкиАспирантов" 
+}
+
+Table competition {
+    id uuid [pk]
+    study_program_id uuid [ ref: > study_program.id, note: 'Образовательная программа, 1C:ОбразовательнаяПрограмма_Key']
+    recruitment_id uuid [ ref: > recruitment.id,  note: 'Набор, 1C:Набор_Key']
+    
+    note: 'new:Конкурс, 1C:Catalog_Конкурсы'
+}
+
+
+Table recruitment {
+    id uuid [pk]
+    name varchar [ note: 'Название набора, 1C:???НаименованиеПолное']
+    start_date date [ note: 'ДатаНачалаНабора, 1C:ДатаНачалаНабора']
+    end_date date [ note: 'ДатаОкончаняНабора, 1C:ДатаОкончаняНабора']
+    dv_education_level_id uuid [ ref: > dictionary_value.id,  note: 'Уровень образования, 1C:УровеньОбразования_Key']
+
+    note: 'new:Набор, 1C:Catalog_НаборыВВУЗ'
+}
+
+
+Table test_to_competition {
+    id uuid [pk]
+    competition_id uuid [ref: > competition.id, note: 'Конкурс, 1C:Ref_Key']
+    dv_test_id uuid [ref: > dictionary_value.id, note: 'Предмет вступительного испытания, 1C:ВступительноеИспытание_Key']
+
+    note: "Предметы вступительных испытания по образовательным программам, 1C:Catalog_ОбразовательнаяПрограмма_ВступительныеИспытания"
+}
+
+
+Table test_schedule {
+    id uuid [ pk ]
+    start_date_time datetime [ note: 'Дата начала испытания, 1С:ДатаИВремяПроведенияЭкзамена']
+    registration_finish_date date [ note: 'Дата окончания регистрации на испытание, 1C:ПоследняяДатаРегистрацииНаИспытание']
+    dv_test_form_id uuid [ ref: > dictionary_value.id, note: 'Форма проведения вступительного испытания, 1C:ТипИспытания перечисление']
+    dv_test_id uuid [ ref: > dictionary_value.id, note: 'Предмет вступительного испытания, 1C:Предмет_Key']
+    dv_locality_id uuid [ref: > dictionary_value.id, note: 'Населенный пункт проведения тестирования, 1C:Город_Key']
+    dv_country_id uuid [ref: > dictionary_value.id, note: 'Страна проведения тестирования, 1C:Страна_Key']
+    capacity int [ note: 'Максимальное количество абитуриентов, 1C:ОбщееКоличествоМест']
+    dv_program_language_id uuid [ ref: > dictionary_value.id, note: 'Язык проведения теста, 1C:ЯзыкПроведенияИспытаний_Key']
+    dv_education_level_id uuid [ ref: > dictionary_value.id,  note: 'new: Уровень образования, 1C:УровеньОбразования_Key']
+
+    note: 'Расписание вступительных испытаний (хотя скорее вступительное испытание), 1C:Catalog_РасписаниеВступительныхИспытаний'
+}
+
+
+Table enrollee {
+    id uuid [ pk ]
+    dv_education_level_id uuid [ ref: > dictionary_value.id,  note: 'Уровень образования, 1C:УровеньОбразования_Key']
+    registration_number int [ note: 'new:Регистрационный номер абитуриента, 1С:РегистрационныйНомер']
+    user_id uuid [ ref: > user.id, note: 'Пользователь']
+
+    note: '1C:Catalog_Абитуриенты'
+}
+
+
+Table enrollee_to_test_schedule {
+    id uuid [ pk ]
+    test_schedule_id uuid [ ref: > test_schedule.id,  note: 'Расписание вступительного испытания, 1C:РасписаниеВступительныхИспытаний']
+    enrollee_id uuid [ ref: > enrollee.id, note: 'Абитуриент, 1С:Абитуриент']
+
+    note: 'Запись на вступительные испытания, из 1С не читаем. 1C:InformationRegistr_РасписаниеВступительныхИспытанийАбитуриентов'
+}
+
+
+Table user {
+    id uuid [pk]
+    username varchar [unique, not null, note: 'Имя пользователя']
+
+    note: '1C:Catalog_Персоны пишем туда'
+}
+

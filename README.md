@@ -1,1 +1,1 @@
-# dbml
+https://www.dbml.org/home/#intro

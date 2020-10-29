@@ -1,0 +1,126 @@
+Project process_stage {
+    Note: 'Часть функциональной модели АСАВ - процессы, этапы, блоки, дельты'
+}
+
+
+Table process_group {
+    id uuid [pk]
+    name varchar [ note: 'Название группы процессов']
+    name_en varchar [ note: 'Название группы процессов на английском']
+
+    note: 'Группа процессов'
+}
+
+
+Table process {
+    id uuid [pk]
+    name varchar [ note: 'Название процесса']
+    name_en varchar [ note: 'Название процесса на английском']
+    description varchar [ note: 'Описание процесса']
+    description_en varchar [ note: 'Описание процесса на английском']
+    signature varchar [ note: 'Сигнатура процесса - для хардкода зависимого поведения']
+    start_date date [ note: 'Дата начала возможности запуска процесса']
+    end_date date [ note: 'Дата окончания возможности запуска процесса']
+    process_group_id uuid [ ref: > process_group.id, note: 'Группа процесса']
+    is_active bool [ note: 'Активность процесса - убрать?']
+
+    note: "Процесс"
+}
+
+
+Table stage {
+    id uuid [pk]
+    url varchar [ note: 'slug (часть url) этапа']
+    number int [ note: 'Порядковый номер этапа для вывода']
+    start_date date [ note: 'Дата начала возможности запуска этапа']
+    end_date date [ note: 'Дата окончания возможности запуска этапа']
+    process_id uuid [ ref: > process.id, note: 'Процесс']
+    dependency_id uuid [ ref: > stage.id, note: 'Предыдущий этап, разрешающий старт этого']
+    is_final bool [ note: 'Флаг завершающего этапа - подумать']
+    template text [ note: 'Шаблон документа']
+    
+    note: 'Этап'
+}
+
+
+Table process_to_user {
+    id uuid [pk]
+    process_id uuid [ ref: > process.id, note: 'Процесс']
+    user_id uuid [ ref: > user.id, note: 'Пользователь']
+    status_id uuid [ ref: > process_status.id, note: 'Статус процесса']
+    
+    note: 'Инстанс процесса'
+}
+
+
+Table process_status {
+    id uuid [pk]
+    signature varchar [ note: 'Сигнатура статуса процесса (Запущен, Закрыт)']
+    
+    note: 'Статус процесса'
+}
+
+
+Table process_stage_to_user {
+    id uuid [pk]
+    process_to_user_id uuid [ ref: > process_to_user.id, note: 'Инстанс процесса']
+    stage_id uuid [ ref: > stage.id, note: 'Этап']
+    status_id uuid [ ref: > stage_status.id, note: 'Статус этапа']
+    
+    note: 'Инстанс этапа'
+}
+
+
+Table stage_status {
+    id uuid [pk]
+    signature varchar [ note: 'Сигнатура статуса этапа (Не заполнен, Отклонена, Одобрена, На рассмотрении)']
+    
+    note: 'Статус этапа'
+}
+
+
+Table block {
+    id uuid [pk]
+    signature varchar [ note: 'Сигнатура блока - идентификатор реквизита группы в 1С']
+    process_stage_to_user_id uuid [ ref: > process_stage_to_user.id, note: 'Инстанс этапа']
+    document varchar [ note: 'Payload блока документа']
+    comment varchar [ note: 'Комментарий оператора к блоку']
+    status_id uuid [ ref: > block_status.id, note: 'Статус блока']
+    
+    note: 'Блок инстанса этапа'
+}
+
+
+Table block_status {
+    id uuid [pk]
+    signature varchar [ note: 'Сигнатура статуса блока (Не заполнен, Отклонена, Одобрена, На рассмотрении)']
+    
+    note: 'Статус блока'
+}
+
+
+Table delta {
+    id uuid [pk]
+    block_id uuid [ ref: > block.id, note: 'Блок']
+    document varchar [ note: 'Payload дельты']
+    status_id uuid [ ref: > delta_status.id, note: 'Статус дельты']
+    
+    note: 'Дельта блока'
+}
+
+
+Table delta_status {
+    id uuid [pk]
+    signature varchar [ note: 'Сигнатура статуса дельты (Не заполнен, Отклонена, Одобрена, На рассмотрении)']
+    
+    note: 'Статус дельты'
+}
+
+
+Table user {
+    id uuid [pk]
+    username varchar [unique, not null, note: 'Имя пользователя']
+
+    note: 'Пользователь'
+}
+
